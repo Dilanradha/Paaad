@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signature Pad with Image Upload</title>
+    <style>
+        #signature-pad {
+            border: 2px solid #000;
+            width: 600px;
+            height: 300px;
+            touch-action: none;
+        }
+        #controls {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Signature Pad</h2>
+
+    <!-- Canvas for Signature Pad -->
+    <canvas id="signature-pad"></canvas>
+
+    <div id="controls">
+        <!-- Image Upload -->
+        <input type="file" id="image-upload" accept="image/*">
+        <!-- Buttons -->
+        <button id="clear">Clear</button>
+        <button id="save">Save as Image</button>
+        <button id="generate-link">Generate Sharable Link</button>
+    </div>
+
+    <div id="shareable-link" style="display:none;">
+        <p>Your shareable link: <a id="link" href="#" target="_blank"></a></p>
+    </div>
+
+    <script>
+        // Variables
+        let canvas = document.getElementById('signature-pad');
+        let ctx = canvas.getContext('2d');
+        let drawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // Resize canvas to match the parent container
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+
+        // Functions for drawing
+        function startDrawing(e) {
+            drawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+
+        function stopDrawing() {
+            drawing = false;
+            ctx.beginPath();
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000';
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+
+        // Canvas event listeners
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch support for mobile devices
+        canvas.addEventListener('touchstart', function(e) {
+            let touch = e.touches[0];
+            let mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }, false);
+
+        canvas.addEventListener('touchmove', function(e) {
+            let touch = e.touches[0];
+            let mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }, false);
+
+        canvas.addEventListener('touchend', function(e) {
+            let mouseEvent = new MouseEvent('mouseup', {});
+            canvas.dispatchEvent(mouseEvent);
+        }, false);
+
+        // Clear button
+        document.getElementById('clear').addEventListener('click', function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Save as image
+        document.getElementById('save').addEventListener('click', function() {
+            let image = canvas.toDataURL('image/png');
+            let link = document.createElement('a');
+            link.href = image;
+            link.download = 'signature.png';
+            link.click();
+        });
+
+        // Image upload
+        document.getElementById('image-upload').addEventListener('change', function(e) {
+            let reader = new FileReader();
+            reader.onload = function(event) {
+                let img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+        // Generate sharable link (Requires backend for storage and generating link)
+        document.getElementById('generate-link').addEventListener('click', function() {
+            let image = canvas.toDataURL('image/png');
+            
+            // Send image to server for storage (dummy link generated)
+            // For now, simulate the process
+            let fakeLink = 'https://example.com/shared/signature.png'; // Replace with actual link generation
+            
+            // Display the shareable link
+            document.getElementById('link').href = fakeLink;
+            document.getElementById('link').textContent = fakeLink;
+            document.getElementById('shareable-link').style.display = 'block';
+        });
+
+    </script>
+
+</body>
+</html>
